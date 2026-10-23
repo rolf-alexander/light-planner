@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LngLat } from 'maplibre-gl';
 import { MapView } from './MapView';
 import { Panel, type Spot } from './Panel';
@@ -6,6 +6,9 @@ import { sampleTerrain } from './dem';
 import { computeHorizon } from './horizon';
 import { dayLight, lightingAt } from './light';
 import { sunPosition } from './sun';
+
+const PLAY_STEP_MIN = 10;
+const PLAY_PAUSE_MS = 80;
 
 export function App() {
   const [spot, setSpot] = useState<Spot | null>(null);
@@ -48,9 +51,27 @@ export function App() {
     setMinutes(minutesNow());
   }
 
+  // Playing steps the clock forward, but only once the map has finished
+  // drawing the previous step, so a slow phone simply plays more slowly.
+  const [playing, setPlaying] = useState(false);
+  const playingRef = useRef(playing);
+  useEffect(() => {
+    playingRef.current = playing;
+  });
+  const step = () => setMinutes((m) => (Math.min(m, dayLengthMin - 1) + PLAY_STEP_MIN) % dayLengthMin);
+
+  function togglePlay() {
+    if (!playing) step();
+    setPlaying(!playing);
+  }
+
+  function handleMapIdle() {
+    if (playingRef.current) setTimeout(() => playingRef.current && step(), PLAY_PAUSE_MS);
+  }
+
   return (
     <>
-      <MapView onTap={handleTap} />
+      <MapView time={time} onTap={handleTap} onIdle={handleMapIdle} />
       <aside className="panel">
         <Panel
           spot={spot}
@@ -62,9 +83,11 @@ export function App() {
           minute={minute}
           dayLengthMin={dayLengthMin}
           time={time}
+          playing={playing}
           onDayChange={setDay}
           onMinuteChange={setMinutes}
           onNow={showNow}
+          onTogglePlay={togglePlay}
         />
       </aside>
     </>

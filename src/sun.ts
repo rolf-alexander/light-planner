@@ -20,6 +20,17 @@ export interface SunPosition {
 }
 
 export function sunPosition(date: Date, lat: number, lng: number): SunPosition {
+  return sunSeenFrom(sunAt(date), lat, lng);
+}
+
+/** The parts of the sun's position that depend only on the time, not the place. */
+export interface SunAtTime {
+  declination: number;
+  /** Sidereal time at Greenwich minus right ascension: the hour angle at longitude 0. */
+  greenwichHourAngle: number;
+}
+
+export function sunAt(date: Date): SunAtTime {
   const d = date.getTime() / MS_PER_DAY - J2000_UNIX_DAYS; // days since J2000
 
   // 1. Where the sun sits along the ecliptic (its yearly path round the sky).
@@ -35,9 +46,15 @@ export function sunPosition(date: Date, lat: number, lng: number): SunPosition {
   const rightAscension = Math.atan2(Math.sin(eclipticLng) * Math.cos(OBLIQUITY), Math.cos(eclipticLng));
 
   // 3. The Earth spins once per sidereal day (slightly under 24 h). The hour
-  // angle H is how far the sun has turned past your meridian: 0 at solar noon.
-  const siderealTime = (280.16 + 360.9856235 * d) * RAD + lng * RAD;
-  const H = siderealTime - rightAscension;
+  // angle H is how far the sun has turned past a meridian: 0 at solar noon.
+  const greenwichSiderealTime = (280.16 + 360.9856235 * d) * RAD;
+  return { declination, greenwichHourAngle: greenwichSiderealTime - rightAscension };
+}
+
+/** The sun's height and bearing as seen from one place. */
+export function sunSeenFrom({ declination, greenwichHourAngle }: SunAtTime, lat: number, lng: number): SunPosition {
+  // Each degree east puts you a degree further round the Earth's spin.
+  const H = greenwichHourAngle + lng * RAD;
 
   // 4. Spherical trigonometry turns (δ, H) into height and bearing for latitude φ.
   const phi = lat * RAD;

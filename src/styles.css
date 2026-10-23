@@ -33,9 +33,63 @@ body,
   background: #1f2933;
 }
 
-.map {
+.map,
+.map-canvas {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+}
+
+/* The sun: a glowing disc placed by camera.ts. Its centre is the sun's position. */
+.sun-disc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, #fffbe6 0 30%, #ffd43b 45%, rgb(255 212 59 / 0) 70%);
+  transition: opacity 0.3s;
+}
+
+/* Behind a ridge from where the camera is: just an outline. */
+.sun-disc[data-state='behind'] {
+  background: none;
+  border: 2px dashed rgb(255 212 59 / 0.85);
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+}
+
+/* Out of view: a smaller marker on the screen edge, pointing the way. */
+.sun-disc[data-state='edge'] {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  opacity: 0.75;
+}
+
+.sun-disc[data-state='down'] {
+  opacity: 0;
+}
+
+.face-sun {
+  position: absolute;
+  top: 150px;
+  right: 10px;
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.1);
+  color: #e67700;
+  font-size: 18px;
+  line-height: 29px;
+  cursor: pointer;
 }
 
 /* Sits above the map; env() keeps it clear of phone notches and home bars. */
@@ -178,6 +232,7 @@ body,
 
 .controls input[type='date'],
 .controls button {
+  flex: none;
   font: inherit;
   font-size: 0.85rem;
   color: var(--text);

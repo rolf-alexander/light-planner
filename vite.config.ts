@@ -7,6 +7,8 @@ const DAY = 24 * 60 * 60;
 export default defineConfig({
   // GitHub Pages serves the site from https://<user>.github.io/light-planner/
   base: '/light-planner/',
+  // Build Web Workers as ES modules, like the rest of the app.
+  worker: { format: 'es' },
   plugins: [
     react(),
     VitePWA({

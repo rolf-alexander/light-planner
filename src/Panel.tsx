@@ -22,9 +22,11 @@ interface Props {
   minute: number;
   dayLengthMin: number;
   time: Date;
+  playing: boolean;
   onDayChange: (day: string) => void;
   onMinuteChange: (minute: number) => void;
   onNow: () => void;
+  onTogglePlay: () => void;
 }
 
 const STATE_TEXT: Record<LightState, string> = {
@@ -139,10 +141,14 @@ function DaySummary({ runs, midnight, minute, dayLengthMin }: DaySummaryProps) {
   );
 }
 
-function TimeControls({ day, minute, dayLengthMin, time, onDayChange, onMinuteChange, onNow }: Props) {
+function TimeControls(props: Props) {
+  const { day, minute, dayLengthMin, time, playing, onDayChange, onMinuteChange, onNow, onTogglePlay } = props;
   return (
     <div className="controls">
       <input type="date" value={day} onChange={(e) => e.target.value && onDayChange(e.target.value)} aria-label="Date" />
+      <button type="button" onClick={onTogglePlay} aria-label={playing ? 'Pause' : 'Play the day'}>
+        {playing ? '❚❚' : '▶'}
+      </button>
       <input
         type="range"
         min={0}

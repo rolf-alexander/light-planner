@@ -7,7 +7,7 @@ import { bilinear, decodeTerrarium, slopeAspect, type SlopeAspect } from './terr
 
 export const DEM_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 
-const TILE_SIZE = 256;
+export const TILE_SIZE = 256;
 // Zoom level we read slope at. Higher = smaller pixels, but the source data in
 // most places is ~30 m, so going much finer just reads interpolated values.
 // At z13 a pixel is ~13 m across in the Alps.
@@ -99,9 +99,43 @@ function pixelElevation(z: number, px: number, py: number): number {
 
   const tx = Math.floor(px / TILE_SIZE);
   const ty = Math.floor(py / TILE_SIZE);
+  return loadedTile(z, tx, ty)[(py - ty * TILE_SIZE) * TILE_SIZE + (px - tx * TILE_SIZE)];
+}
+
+/**
+ * Copies a width × height block of pixel heights, starting at world pixel
+ * (x0, y0), into one array. Copies whole runs of each tile row at once,
+ * which is far faster than reading pixel by pixel. Load the area first.
+ */
+export function readGrid(z: number, x0: number, y0: number, width: number, height: number): Float32Array {
+  const worldPx = TILE_SIZE * 2 ** z;
+  const grid = new Float32Array(width * height);
+  for (let j = 0; j < height; j++) {
+    const py = Math.min(Math.max(y0 + j, 0), worldPx - 1);
+    const ty = Math.floor(py / TILE_SIZE);
+    const rowStart = (py - ty * TILE_SIZE) * TILE_SIZE;
+    for (let i = 0; i < width; ) {
+      const px = (((x0 + i) % worldPx) + worldPx) % worldPx;
+      const tx = Math.floor(px / TILE_SIZE);
+      const col = px - tx * TILE_SIZE;
+      const run = Math.min(TILE_SIZE - col, width - i);
+      grid.set(loadedTile(z, tx, ty).subarray(rowStart + col, rowStart + col + run), j * width + i);
+      i += run;
+    }
+  }
+  return grid;
+}
+
+/** Inverse of toWorldPixel's latitude formula: φ = arctan(sinh(π(1 − 2y/W))). */
+export function latitudeOfWorldY(y: number, z: number): number {
+  const n = Math.PI * (1 - (2 * y) / (TILE_SIZE * 2 ** z));
+  return (Math.atan(Math.sinh(n)) * 180) / Math.PI;
+}
+
+function loadedTile(z: number, tx: number, ty: number): Float32Array {
   const tile = loadedTiles.get(`${z}/${tx}/${ty}`);
   if (!tile) throw new Error(`Elevation tile ${z}/${tx}/${ty} used before it was loaded`);
-  return tile[(py - ty * TILE_SIZE) * TILE_SIZE + (px - tx * TILE_SIZE)];
+  return tile;
 }
 
 // Downloads in progress or done, so overlapping requests share one fetch...
@@ -133,8 +167,8 @@ async function fetchTile(z: number, x: number, y: number): Promise<Float32Array>
     colorSpaceConversion: 'none',
     premultiplyAlpha: 'none',
   });
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = TILE_SIZE;
+  // OffscreenCanvas works both on the page and inside a Web Worker.
+  const canvas = new OffscreenCanvas(TILE_SIZE, TILE_SIZE);
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
   ctx.drawImage(bitmap, 0, 0);
   const rgba = ctx.getImageData(0, 0, TILE_SIZE, TILE_SIZE).data;
