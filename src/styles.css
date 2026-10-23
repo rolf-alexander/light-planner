@@ -1,0 +1,206 @@
+:root {
+  --panel-bg: rgb(255 255 255 / 0.92);
+  --text: #1f2933;
+  --muted: #616e7c;
+  --error: #c92a2a;
+  --rule: rgb(0 0 0 / 0.12);
+  --night: #243b53;
+  --shade: #9fb3c8;
+  --sun: #fcc419;
+  --sun-text: #b35c00;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --panel-bg: rgb(31 41 51 / 0.92);
+    --text: #f5f7fa;
+    --muted: #9aa5b1;
+    --error: #ff8787;
+    --rule: rgb(255 255 255 / 0.16);
+    --night: #102a43;
+    --shade: #627d98;
+    --sun-text: #ffd43b;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #1f2933;
+}
+
+.map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Sits above the map; env() keeps it clear of phone notches and home bars. */
+.panel {
+  position: absolute;
+  left: calc(12px + env(safe-area-inset-left));
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(40px + env(safe-area-inset-bottom));
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--panel-bg);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.25);
+  backdrop-filter: blur(6px);
+}
+
+.panel p {
+  margin: 0;
+}
+
+.panel dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.panel dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.panel dd {
+  margin: 2px 0 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel .meta {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--error);
+}
+
+/* --- Sun and light --- */
+
+.panel .sun,
+.panel .light {
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.panel .light {
+  font-weight: 600;
+}
+
+.light-sun {
+  color: var(--sun-text);
+}
+
+.day {
+  margin-top: 8px;
+}
+
+/* A 24-hour strip; each run is positioned as a percentage of the day. */
+.timeline {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--night);
+}
+
+.run {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.run-night {
+  background: var(--night);
+}
+
+.run-terrain-shadow,
+.run-self-shadow {
+  background: var(--shade);
+}
+
+.run-sun {
+  background: var(--sun);
+}
+
+.now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+}
+
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel .summary {
+  margin-top: 2px;
+  font-size: 0.85rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.controls input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.controls input[type='date'],
+.controls button {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.controls output {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 3em;
+  text-align: right;
+}
+
+/* On phones, give the date its own row so the time slider stays usable. */
+@media (max-width: 440px) {
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .controls input[type='date'] {
+    flex: 1 1 100%;
+  }
+}
